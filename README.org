@@ -10,6 +10,15 @@
   : $ unzip ./master.zip
   
 * Installing
+  You will need to install =Node.js= and the package manager for, =NPM=.
+  After you've done installing, do:
+  : # npm -g install grunt-cli
+  This will download a bunch of goodness needed to run =grunt=
+  /(the second worst build system after MSBuild)/
+  : $ npm install
+  Then you can build and test the project.
+  : $ grunt
+  
 * Running
 * Bugs
 * Tasks
@@ -29,6 +38,8 @@
    It says in the spec it has to work with JSON/XML, loading one
    locally is a headache, Python =httpd= seems like the easiets to
    deploy, I also have to have another example somewhere.
+
+   Actually, maybe =Node.js= will work better for this task.
 
 ** TODO Cut sprites for the game                                     :design:
    DEADLINE: <2014-01-11 Sat>

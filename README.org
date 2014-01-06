@@ -1,0 +1,39 @@
+* Obtaining
+* Installing
+* Running
+* Bugs
+* Tasks
+
+** TODO Arrange for npm installable package                         :install:
+   DEADLINE: <2014-01-10 Fri>
+   Just copy the setup from some othen NPM package. Also need to figure
+   how to make a locally installable version.
+
+** TODO Add Grunt build                                             :install:
+   DEADLINE: <2014-01-10 Fri>
+   This is related to the task above. Get the =grunt= file somehwere
+   and replicate it here.
+
+** TODO Write simple Python server to back up the game               :server:
+   DEADLINE: <2014-01-10 Fri>
+   It says in the spec it has to work with JSON/XML, loading one
+   locally is a headache, Python =httpd= seems like the easiets to
+   deploy, I also have to have another example somewhere.
+
+** TODO Cut sprites for the game                                     :design:
+   DEADLINE: <2014-01-11 Sat>
+   Need the sprites for the game, so far I can think of these:
+
+   - Background terrain.
+   - Wall.
+   - Box.
+   - Player.
+   - Destination point.
+   - Coin /(animated)/.
+   - Glue /(maybe animated)/.
+   - Digits to display the score /(maybe can just use some font)/.
+
+** TODO Check on Android emulator                                     :tools:
+   DEADLINE: <2014-01-09 Thu>
+   I've not used it in a while, probably out of date. Ideally, =grunt=
+   has to be able to deploy to emulator, if it's connected.

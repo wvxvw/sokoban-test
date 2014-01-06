@@ -20,6 +20,13 @@
   : $ grunt
   
 * Running
+  Since you already have =Node.js= installed, starting the server is
+  easy:
+  : $ cd ./bin
+  : $ ./sokoban-server
+  The server will start on port 8000, navigating to
+  http://localhost:8000 will launch the game.
+  
 * Bugs
 * Tasks
 

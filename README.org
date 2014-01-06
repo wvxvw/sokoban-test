@@ -1,4 +1,14 @@
 * Obtaining
+  You will need to install git, on RHEL-like Linux:
+  : $ yum install git
+  Debian-like:
+  : $ apt-get install git
+  Then you can check out the repository
+  : $ git clone https://github.com/wvxvw/compedia-test.git
+  Alternatively you could simply download the sources:
+  : $ wget https://github.com/wvxvw/compedia-test/archive/master.zip
+  : $ unzip ./master.zip
+  
 * Installing
 * Running
 * Bugs

@@ -1,6 +1,6 @@
 /* global define */
 
-define(
+requirejs(
     [/* imports */],
 function () {
 

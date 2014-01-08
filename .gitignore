@@ -1,3 +1,5 @@
 *~
 node_modules
 /bin/js/r.js
+/bin/js/type.js
+/bin/js/utils.js

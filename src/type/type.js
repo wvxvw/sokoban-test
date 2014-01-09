@@ -2,17 +2,17 @@
 
 requirejs(
     ['underscore', 'utils'],
-function (_, utils) {
-    var types = { }, tree = { }, constructors = { }, fields = { },
+function (_, u) {
+    var types = { }, tree = { }, constructors = { },
         builtins = ['object', 'bool', 'string', 'number', 'func',
                     'regexp', 'date', 'sequence', 'hashmap',
                     'vector', 'error'],
         slice = Array.prototype.slice;
     
     function typeOf(value) {
-        _.filter(types, function (key, predicate) {
+        return _.filter(types, function (key, predicate) {
             return predicate(value);
-        });
+        })[0] || nul;
     }
 
     function object(value) {
@@ -60,63 +60,41 @@ function (_, utils) {
     function error(value) { return value instanceof Error; }
 
     function cerror(message) {
-        return new Error(utils.format(message, slice.call(arguments, 1)));
+        return new Error(u.format(message, slice.call(arguments, 1)));
     }
 
     function nul(value) { return !object(value); }
     
     function isType(value, type) { return type(value); }
-
-    function makeInstance(type) {
-        return constructors[type].apply(null, slice.call(arguments, 1));
-    }
     
     function defType(type, constructor, predicate, parents) {
-        var pars = utils.ensureArray(parents || object);
+        // We don't have object yet, and circular dependencies aren't allowed
+        var pars = u.ensureArray(parents || object);
         if (_.every(pars, isType)) tree[type] = pars;
-        else throw makeInstance('error', 'Incorrect parent types');
+        else throw cerror('Incorrect parent types: ~s', parents);
         if (!(func(predicate) || string(type) || func(constructor)))
-             throw makeInstance('error', 'Wrong argument types');
+             throw cerror('Wrong argument types: ~s', [predicate, type, constructor]);
         constructors[type] = constructor;
         return types[type] = predicate;
     }
 
-    function fieldsOf(type) { return fields[type] || []; }
-    
-    function extend(child, parent) {
-        // Look into C3 for exact implementation
-        // these have to agree on type
-        return _.union(fieldsOf(parent), child);
-    }
-
-    function defClass(type, constructor, fields, parents) {
-        var slots = fields[type] = _.reduce(parents, extend);
-
-        function cons () {
-            var result = new constructor();
-            utils.zipWith(_.partial(utils.aset, result),
-                          slots, slice.call(arguments));
-            return result;
-        };
-        defType(type, cons, function (value) { return types[type]; }, parents);
-        return cons;
-    }
-
     function getType(type) { return types[type]; }
 
-    utils.zipWith(
-        _.partial(utils.aset, types), builtins,
+    u.zipWith(
+        _.partial(u.aset, types), builtins,
         [object, bool, string, number, func, regexp, date,
          sequence, hashmap, vector, error]);
-    utils.zipWith(
-        _.partial(utils.aset, constructors), builtins,
+    u.zipWith(
+        _.partial(u.aset, constructors), builtins,
         [cobject, cbool, cstring, cnumber, cfunc, cregexp, cdate,
          csequence, chashmap, cvector, cerror]);
     _.each(builtins, function (x) { tree[x] = ['object']; });
-    fields.func = ['length'];
-    fields.vector = ['length'];
 
-    return { typeOf: typeOf, isType: isType, defType: defType, getType: getType };
+    return { typeOf: typeOf, isType: isType, defType: defType, getType: getType,
+             builtins: {
+                 object: object, bool: bool, string: string, number: number,
+                 func: func, regexp: regexp, date: date, sequence: sequence,
+                 hashmap: hashmap, vector: vector, error: error } };
 });
 
 

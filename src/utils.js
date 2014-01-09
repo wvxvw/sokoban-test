@@ -86,14 +86,43 @@ function (_) {
 
     function aref(array, n) { return array[n]; }
 
+    function aset(array, n, v) { return array[n] = v; }
+
     function raref(array /* rest */) {
         return _.reduce(slice.call(arguments, 1), aref, array);
     }
 
+    function ensureArray(maybeArray) {
+        return maybeArray instanceof Array ? maybeArray : [maybeArray];
+    }
+
     function constantly(value) { return function () { return value; }; }
+
+    function times(func, i, result) {
+        if (result) while (--i >= 0) result.unshift(func(i));
+        else while (--i >= 0) func(i);
+        return result;
+    }
+    
+    function zipWith(func /* rest */) {
+        var rest = slice.call(arguments, 1);
+        return times(function (i) {
+            return func.apply(null, _.map(rest, _.partial(aref, i)));
+        }, _.min(_.pluck(rest, 'length')), []);
+    }
+
+    function flip(func /* rest */) {
+        var rest = slice.call(arguments, 1).reverse();
+        return function () {
+            return func.apply(null, slice.call(arguments).concat(rest));
+        };
+    }
+
+    function repeat(element, n) { return times(constantly(element), n, []); }
     
     return { treeSize: treeSize, binaryInsert: binaryInsert, equal: equal,
              positionIf: positionIf, indexOf: indexOf, mvcompose: mvcompose,
              triduce: triduce, mapply: mapply, mapcall: mapcall, aref: aref,
-             raref: raref, constantly: constantly };
+             raref: raref, constantly: constantly, zipWith: zipWith,
+             ensureArray: ensureArray, times: times, flip: flip };
 });

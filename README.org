@@ -4,9 +4,9 @@
   Debian-like:
   : $ apt-get install git
   Then you can check out the repository
-  : $ git clone https://github.com/wvxvw/compedia-test.git
+  : $ git clone https://github.com/wvxvw/sokoban-test.git
   Alternatively you could simply download the sources:
-  : $ wget https://github.com/wvxvw/compedia-test/archive/master.zip
+  : $ wget https://github.com/wvxvw/sokoban-test/archive/master.zip
   : $ unzip ./master.zip
   
 * Installing

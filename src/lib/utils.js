@@ -141,11 +141,30 @@ function (_) {
         });
         return result;
     }
+
+    function mapc(func /* rest */) {
+        // _.each has wrong arguments order and passes useless extra arguments
+        // to the function it calls
+        for (var i = 0, rest = slice.call(arguments, 1),
+                 len = _.min(_.pluck(rest, 'length')); i < len; i++)
+            func.apply(null, _.map(rest, _.partial(fera, i)));
+    }
+
+    function maphash(func /* rest */) {
+        // same as _.each, its unusable when functions need to rely on proper
+        // arity.
+        if (arguments.length == 2) {
+            for (var p in arguments[0]) func(p, arguments[0][p]);
+        } else {
+            var tables = slice.call(arguments, 1);
+            zipWith(func, _.map(tables, _.keys), _.map(tables, _.values));
+        }
+    }
     
     return { treeSize: treeSize, binaryInsert: binaryInsert, equal: equal,
              positionIf: positionIf, indexOf: indexOf, mvcompose: mvcompose,
              triduce: triduce, mapply: mapply, mapcall: mapcall, aref: aref,
              raref: raref, constantly: constantly, zipWith: zipWith,
              ensureArray: ensureArray, times: times, flip: flip, aset: aset,
-             capitalize: capitalize, format: format };
+             capitalize: capitalize, format: format, mapc: mapc, maphash: maphash };
 });

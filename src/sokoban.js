@@ -35,6 +35,8 @@ function (_, u, t, o) {
     o.defGeneric('start', [t]);
     o.defGeneric('update', [t, t]);
     o.defGeneric('register', [t, t, t]);
+    o.defGeneric('getPlayerX', [t]);
+    o.defGeneric('getPlayerY', [t]);
 
     o.defMethod(
         'draw', ['gameObject', 'map'],
@@ -67,12 +69,32 @@ function (_, u, t, o) {
         });
 
     o.defMethod(
+        'getPlayerX', ['map'],
+        function (map) {
+            // moving left
+            return 0;
+        });
+
+    o.defMethod(
+        'getPlayerY', ['map'],
+        function (map) {
+            // moving left
+            return 0;
+        });
+
+    o.defMethod(
+        'register', ['eventHandler', 'listener', 'string'],
+        function (handler, listener, string) {
+            m.eventHandlerListeners(handler)[string] = listener;
+        });
+
+    o.defMethod(
         'start', ['eventHandler'],
         function (handler) {
             u.zipWith(
                 _.compose(_.partial(m.register, handler), o.makeInstance),
-                ['up-listener', 'down-listener',
-                 'right-listener', 'left-listener'],
+                ['upListener', 'downListener',
+                 'rightListener', 'leftListener'],
                 ['up', 'down', 'right', 'left']);
         });
 

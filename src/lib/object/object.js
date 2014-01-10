@@ -8,8 +8,8 @@ function (_, u, t) {
         generics = { }, methods = { };
 
     function computeSlots(type) {
-        var result = { };
-        _.each(classes[type].slots, u.flip(makeSlot, result, type));
+        var result = classes[type].slots || { };
+        u.mapc(classes[type].slots = result, u.flip(makeSlot, result, type));
         return result;
     }
 
@@ -39,20 +39,23 @@ function (_, u, t) {
         return result;
     }
     
-    function makeInstance(type) {
-        var slots = computeSlots(type);
-        return function (slot, value) {
-            switch (arguments.length) {
-            case 0: break;
-            case 1:
-            case 2:
-                if (!(slot in slots))
-                    throw new Error('Class ' + type + ' has no slot ' + slot);
-                return slots[slot](value);
-            default:
-                throw new Error('Extra arguments ' + arguments);
-            }
-        };
+    function makeInstance(type, initialValues) {
+        var slots = computeSlots(type), cons = classes[type],
+            result = function (slot, value) {
+                switch (arguments.length) {
+                case 0: return cons;
+                case 1:
+                case 2:
+                    if (!(slot in slots))
+                        throw new Error('Class ' + type + ' has no slot ' + slot);
+                    return slots[slot](value);
+                default:
+                    throw new Error('Extra arguments ' + slice.call(arguments));
+                }
+            };
+        u.maphash(result, initialValues);
+        result.t = t.typeOf;
+        return result;
     }
 
     function extend(child, parent) {
@@ -71,11 +74,11 @@ function (_, u, t) {
 
         if (!parents.length) parents.push('object');
         t.defType(type, function (value) {
-            return t.typesOf(value).indexOf(type) > -1;
+            return b.func(value) && value()() == type;
         }, parents);
-        classes[type] =
-            { slots: _.reduce(parents, extend, fields), type: type };
-        return type;
+        return classes[type] = function (slots, type) {
+            return function () { return arguments.length ? slots : type; };
+        }(_.reduce(parents, extend, fields), type);
     }
 
     function chooseBestMethod(methodsGroup, args) {
@@ -109,15 +112,17 @@ function (_, u, t) {
                 break;
             }
         });
-        generics[name] = { func: function () {
-            var a = slice.call(arguments);
-            var result = chooseBestMethod(methods[name], a);
-            if (!result)
-                throw new Error('No method matches these arguments ' + a);
-            return result.apply(null, a);
-        }, args: args };
+        generics[name] = function (args) {
+            return function () {
+                var a = slice.call(arguments);
+                var result = chooseBestMethod(methods[name], a, args);
+                if (!result)
+                    throw new Error('No method matches these arguments ' + a);
+                return result.apply(null, a);
+            };
+        }(args);
         methods[name] = { };
-        return generics[name].func;
+        return generics[name];
     }
 
     function isSignatureCompatible(signature, name) {
@@ -158,5 +163,5 @@ function (_, u, t) {
     classes.object = { type: 'object', slots: [] };
 
     return { defClass: defClass, makeInstance: makeInstance, defGeneric: defGeneric,
-             defMethod: defMethod, methods: methods };
+             defMethod: defMethod, methods: generics };
 });

@@ -10,9 +10,10 @@ function (_, u) {
         slice = Array.prototype.slice;
     
     function typeOf(value) {
-        return _.filter(types, function (key, predicate) {
-            return predicate(value);
-        })[0] || nul;
+        if (value.t == typeOf) return value()();
+        return _.filter(types, function (predicate, key) {
+            return predicate(value) && key;
+        })[0] || 'nul';
     }
 
     function object(value) {
@@ -67,6 +68,7 @@ function (_, u) {
 
     function isSubtypeOf(type, maybeSuper) {
         var supertypes = tree[type], result;
+        debugger;
         if (!(maybeSuper != 'object' && u.equal(supertypes, ['object'])))
             result = maybeSuper == 'object' || supertypes.indexOf(maybeSuper) > -1 ||
             _.some(supertypes, u.flip(maybeSuper));
@@ -80,7 +82,7 @@ function (_, u) {
     function isType(value, type) {
         return types[type](value) || u.somecall(subtypesOf(type));
     }
-    
+
     function defType(type, predicate, parents) {
         // We don't have object yet, and circular dependencies aren't allowed
         var pars = u.ensureArray(parents || object);
@@ -94,10 +96,7 @@ function (_, u) {
 
     function getType(type) { return types[type]; }
 
-    u.zipWith(
-        function (x, y) {
-            _.partial(u.aset, types)(x, y);
-        }, builtins,
+    u.zipWith(_.partial(u.aset, types), builtins,
         [object, bool, string, number, func, regexp, date,
          sequence, hashmap, vector, error]);
     u.zipWith(

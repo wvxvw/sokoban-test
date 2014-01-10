@@ -3,3 +3,7 @@ node_modules
 /bin/js/r.js
 /bin/js/type.js
 /bin/js/utils.js
+/bin/js/lib/*
+/bin/js/game/*
+/bin/js/min/*
+/bin/js/require.js

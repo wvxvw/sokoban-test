@@ -12,8 +12,27 @@ module.exports = function(grunt) {
             ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */\n',
         // Task configuration.
         uglify: {
-            types: { files: { 'bin/js/type.js': ['src/type/type.js'] } },
-            utils: { files: { 'bin/js/utils.js': ['src/utils.js'] } }
+            types: { files: { 'bin/js/min/lib/type.js': ['src/lib/type/type.js'] } },
+            utils: { files: { 'bin/js/min/lib/utils.js': ['src/lib/utils.js'] } },
+            object: { files: { 'bin/js/min/lib/object.js': ['src/lib/object/object.js'] } },
+            sokoban: { files: { 'bin/js/min/game/sokoban.js': ['src/sokoban.js'] } }
+        },
+        copy: {
+            main: {
+                files: [{ expand: true, src: ['src/lib/**.js', 'src/lib/*/**.js'],
+                          dest: 'bin/js/lib', flatten: true },
+                        { expand: true, src: ['src/sokoban.js'],
+                          dest: 'bin/js/game', flatten: true },
+                        { expand: true, src: ['node_modules/lodash/lodash.js'],
+                          dest: 'bin/js/lib', flatten: true },
+                        { expand: true, src: 'node_modules/lodash/dist/lodash.min.js',
+                          dest: 'bin/js/min/lib', flatten: true,
+                          rename: function (dest, src) {
+                              return dest + '/' + src.replace('.min', '');
+                          } },
+                        { expand: true, src: 'node_modules/requirejs/require.js',
+                          dest: 'bin/js/', flatten: true }]
+            }
         },
         jshint: {
             options: {
@@ -56,7 +75,9 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-jasmine');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-contrib-copy');
 
     // Default task.
-    grunt.registerTask('default', ['jshint', 'jasmine', 'uglify']);
+    grunt.registerTask('default', ['jshint', 'jasmine', 'copy']);
+    grunt.registerTask('deploy', ['jshint', 'jasmine', 'uglify']);
 };

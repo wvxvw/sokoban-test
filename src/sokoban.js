@@ -1,7 +1,7 @@
-/* global requirejs */
+/* global define */
 
-requirejs(
-    ['underscore', 'utils', 'type', 'object'],
+define(
+    ['lodash', 'lib/utils', 'lib/type', 'lib/object'],
 function (_, u, t, o) {
     var b = t.builtins, m = o.methods;
 
@@ -16,7 +16,7 @@ function (_, u, t, o) {
         [{ name: 'turns', type: t.vector, initform: 0 }]);
 
     o.defClass(
-        'map', []
+        'map', [],
         [{ name: 'width', type: t.number },
          { name: 'height', type: t.number }]);
 
@@ -85,21 +85,3 @@ function (_, u, t, o) {
         m.start(o.makeInstance('eventHandler'));
     };
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

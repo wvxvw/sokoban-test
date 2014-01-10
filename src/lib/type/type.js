@@ -1,7 +1,7 @@
 /* global define */
 
-requirejs(
-    ['underscore', 'utils'],
+define(
+    ['lodash', 'lib/utils'],
 function (_, u) {
     var types = { }, tree = { }, constructors = { },
         builtins = ['object', 'bool', 'string', 'number', 'func',
@@ -64,24 +64,40 @@ function (_, u) {
     }
 
     function nul(value) { return !object(value); }
+
+    function isSubtypeOf(type, maybeSuper) {
+        var supertypes = tree[type], result;
+        if (!(maybeSuper != 'object' && u.equal(supertypes, ['object'])))
+            result = maybeSuper == 'object' || supertypes.indexOf(maybeSuper) > -1 ||
+            _.some(supertypes, u.flip(maybeSuper));
+        return result;
+    }
     
-    function isType(value, type) { return type(value); }
+    function subtypesOf(type) {
+        return _.filter(types, _.partial(isSubtypeOf, type));
+    }
     
-    function defType(type, constructor, predicate, parents) {
+    function isType(value, type) {
+        return types[type](value) || u.somecall(subtypesOf(type));
+    }
+    
+    function defType(type, predicate, parents) {
         // We don't have object yet, and circular dependencies aren't allowed
         var pars = u.ensureArray(parents || object);
-        if (_.every(pars, isType)) tree[type] = pars;
+        if (_.every(pars, function (parent) { return parent in types; }))
+            tree[type] = pars;
         else throw cerror('Incorrect parent types: ~s', parents);
-        if (!(func(predicate) || string(type) || func(constructor)))
-             throw cerror('Wrong argument types: ~s', [predicate, type, constructor]);
-        constructors[type] = constructor;
+        if (!(func(predicate) || string(type)))
+             throw cerror('Wrong argument types: ~s', [predicate, type]);
         return types[type] = predicate;
     }
 
     function getType(type) { return types[type]; }
 
     u.zipWith(
-        _.partial(u.aset, types), builtins,
+        function (x, y) {
+            _.partial(u.aset, types)(x, y);
+        }, builtins,
         [object, bool, string, number, func, regexp, date,
          sequence, hashmap, vector, error]);
     u.zipWith(
@@ -96,9 +112,3 @@ function (_, u) {
                  func: func, regexp: regexp, date: date, sequence: sequence,
                  hashmap: hashmap, vector: vector, error: error } };
 });
-
-
-
-
-
-

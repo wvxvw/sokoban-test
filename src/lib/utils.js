@@ -1,7 +1,7 @@
 /* global requirejs */
 
-requirejs(
-    ['underscore'],
+define(
+    ['lodash'],
 function (_) {
 
     var slice = Array.prototype.slice;
@@ -85,6 +85,8 @@ function (_) {
     }
 
     function aref(array, n) { return array[n]; }
+    
+    function fera(n, array) { return array[n]; }
 
     function aset(array, n, v) { return array[n] = v; }
 
@@ -107,7 +109,7 @@ function (_) {
     function zipWith(func /* rest */) {
         var rest = slice.call(arguments, 1);
         return times(function (i) {
-            return func.apply(null, _.map(rest, _.partial(aref, i)));
+            return func.apply(null, _.map(rest, _.partial(fera, i)));
         }, _.min(_.pluck(rest, 'length')), []);
     }
 
@@ -119,10 +121,31 @@ function (_) {
     }
 
     function repeat(element, n) { return times(constantly(element), n, []); }
+
+    function somecall(/* rest */) {
+        var result, rest = slice.call(arguments), i = 0;
+        // TODO: need to find out how to disable this warning
+        while (result = rest[i++]) if (result()) return true;
+        return false;
+    }
+
+    function capitalize(string) {
+        return string.charAt().toUpperCase() + string.substr(1);
+    }
+
+    function format(string, args) {
+        // this will be extended in the future
+        var result = string;
+        _.each(args, function (arg) {
+            result = result.replace('~s', arg);
+        });
+        return result;
+    }
     
     return { treeSize: treeSize, binaryInsert: binaryInsert, equal: equal,
              positionIf: positionIf, indexOf: indexOf, mvcompose: mvcompose,
              triduce: triduce, mapply: mapply, mapcall: mapcall, aref: aref,
              raref: raref, constantly: constantly, zipWith: zipWith,
-             ensureArray: ensureArray, times: times, flip: flip };
+             ensureArray: ensureArray, times: times, flip: flip, aset: aset,
+             capitalize: capitalize, format: format };
 });

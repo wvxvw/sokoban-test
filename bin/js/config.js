@@ -1,5 +1,7 @@
-/* global requirejs */
+/* global requirejs, requirejs */
 requirejs.config({
-    baseUrl: 'js/lib',
-    paths: { sokoban: '/lib/sokoban' }
+    baseUrl: 'js',
+    paths: { lib: 'lib', game: 'game/sokoban', lodash: 'lib/lodash' }
 });
+
+require(['game'], function (game) { game(600, 600); });

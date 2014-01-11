@@ -1,8 +1,8 @@
 * Obtaining
   You will need to install git, on RHEL-like Linux:
-  : $ yum install git
+  : # yum install git nodejs mysql-devel
   Debian-like:
-  : $ apt-get install git
+  : # apt-get install git node mysql-dev
   Then you can check out the repository
   : $ git clone https://github.com/wvxvw/sokoban-test.git
   Alternatively you could simply download the sources:
@@ -18,6 +18,9 @@
   : $ npm install
   Then you can build and test the project.
   : $ grunt
+  You also need to exectue the SQL script found in [[./sql/deploy.sql][deploy.sql]]
+  Notice that you need to have admin permissions for the database
+  /(when and if I'll have the time, I'll make the deployment automatic)/
   
 * Running
   Since you already have =Node.js= installed, starting the server is
@@ -25,9 +28,36 @@
   : $ cd ./bin
   : $ ./sokoban-server
   The server will start on port 8000, navigating to
-  http://localhost:8000 will launch the game.
+  [[http://localhost:8000]] will launch the game.
+
+* Troubleshooting
+  - Make sure =Node.js= is in =/usr/bin/node=:
+    : $ command -v node
+    If the value differs from above, change the
+    [[./bin/sokoban-server][sokoban-server]] to reflect the program location.
+  - Make sure you've created the database. Creating database should
+    be something along these lines:
+    : $ mysql < ./sql/deploy.sql
+  - Make sure the database is up:
+    : $ ps aux | grep mysqld
+    If no results, start =mysqld= service:
+    : # service mysqld start
+  - Make sure the database access information matches
+    the information in [[./bin/config.json][config.json]], to test try
+    : $ cat ./bin/config.json \
+    : | python -c 'import json,sys;o=json.load(sys.stdin);\
+    :   print o["dbuser"] + " " + o["dbpassword"]' \
+    : | xargs -n3 sh -c 'mysql --user=$0 --password=$1'
+    /(formatted for readability)/
   
 * Bugs
+  - Method selection is outright wrong, but I've no time to make it right.
+  - Slot access is too clumsy.
+  - Sever script needs to be split into several files, It also needs to
+    make use of client's utilities library.
+  - Android deployment hasn't been written and won't be this Sunday. Sorry.
+  - Database setup is manula at this time, again, sorry, no time.
+
 * Tasks
 
 ** TODO Arrange for npm installable package                         :install:

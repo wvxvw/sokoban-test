@@ -13,7 +13,8 @@ function (_, u, t, o, http) {
     
     o.defClass(
         'player', ['gameObject'],
-        { turns: { type: b.vector, initform: [] } });
+        { turns: { type: b.vector, initform: [] },
+          uid: { type: b.string } });
 
     o.defClass('coin', ['gameObject'] );
     o.defClass('magnet', ['gameObject'] );
@@ -26,7 +27,8 @@ function (_, u, t, o, http) {
           cellHeight: { type: b.number },
           board: { type: b.vector },
           background: { type: b.object },
-          canvas: { type: b.object } });
+          canvas: { type: b.object },
+          player: { type: t.getType('player') } });
 
     o.defClass(
         'eventHandler', [],
@@ -154,10 +156,10 @@ function (_, u, t, o, http) {
     }
     
     function initGame(data) {
-        var map = parseMap(data),
-            queue = o.makeInstance('vector'),
-            palyer = o.makeInstance(
-                'player', { x: m.getPlayerX(map), y: m.getPlayerY(map) });
+        var map = parseMap(data.level),
+            player = o.makeInstance(
+                'player', { x: m.getPlayerX(map), y: m.getPlayerY(map), uid: data.uid });
+        m.mapPlayer(map, player);
     }
 
     o.defMethod(

@@ -1,0 +1,20 @@
+[
+    { "player": { "chip": 0, "skin": "img/player.png" },
+      "floor": { "chip": 1, "skin": "img/floor.png" },
+      "wall": { "chip": 2, "skin": "img/wall.png" },
+      "box": { "chip": 3, "skin": "img/box.png" },
+      "goal": { "chip": 4, "skin": "img/goal.png" },
+      "goalbox": { "chip": 5, "skin": "img/goalbox.png" },
+      "coin": { "skin": "img/coin.png" },
+      "magnet": { "skin": "img/magnet.png" },
+      "gird": [30, 30],
+      "map": [[1, 1, 2, 2, 2, 2, 2, 1],
+              [2, 2, 2, 1, 1, 1, 2, 1],
+              [2, 4, 1, 1, 1, 1, 2, 1],
+              [2, 2, 2, 1, 1, 4, 2, 1],
+              [2, 4, 2, 2, 1, 1, 2, 1],
+              [2, 1, 2, 1, 4, 1, 2, 2],
+              [2, 1, 1, 5, 1, 1, 4, 2],
+              [2, 1, 1, 1, 4, 1, 1, 2],
+              [2, 2, 2, 2, 2, 2, 2, 2]] }
+]

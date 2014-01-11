@@ -32,10 +32,15 @@ function (_, u, t) {
                         u.format('Expected object to be of type ~s, but got ~s',
                                 [type, t.typeOf(object)]));
                 case 2:
-                    if (t.isType(object, type) && t.isType(value, description.type))
+                    if (t.isType(object, type) &&
+                        ((description.type && description.type(value)) ||
+                         !description.type))
                         return description.value = value;
                     else throw new Error(
                         u.format('Expected argument types ~s and ~s, but got ~s and ~s',
+                                 // TODO: find out where else `getType' is used
+                                 // the code below is wrong, but maybe we could make
+                                 // it actually do what it was intended for
                                  [type, t.getType(description.type),
                                   t.typeOf(object), t.typeOf(value)]));
                 default:

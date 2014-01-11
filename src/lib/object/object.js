@@ -8,32 +8,53 @@ function (_, u, t) {
         generics = { }, methods = { };
 
     function computeSlots(type) {
-        var result = classes[type].slots || { };
-        u.mapc(classes[type].slots = result, u.flip(makeSlot, result, type));
+        var slots = classes[type](0) || { },
+            result = { };
+        _.each(slots, function (value, key) {
+            if (value.allocation != 'class')
+                result[key] = copySlotDescription(value);
+        });
+        u.mapc(result, u.flip(makeSlot, result, type));
         return result;
     }
 
-    function makeSlot(description, slots, type) {
-        var val, result = classes[type][description.name] = function (value) {
-            if (arguments.length) {
-                if (t.getType(description.type)(value))
-                    return description.value = value;
-                else throw new Error(
-                    'Expected type: ' + description.type +
-                        ' but got ' + t.typeOf(value));
-            } else return description.value;
+    function makeSlot(description, type, name) {
+        var val, slotName = type + u.capitalize(name),
+            result = function (object, value) {
+                switch (arguments.length) {
+                case 0:
+                    throw new Error(
+                        u.format('Not enough arguments for ~s', [slotName]));
+                case 1:
+                    if (t.isType(object, type))
+                        return description.value;
+                    else throw new Error(
+                        u.format('Expected object to be of type ~s, but got ~s',
+                                [type, t.typeOf(object)]));
+                case 2:
+                    if (t.isType(object, type) && t.isType(value, description.type))
+                        return description.value = value;
+                    else throw new Error(
+                        u.format('Expected argument types ~s and ~s, but got ~s and ~s',
+                                 [type, t.getType(description.type),
+                                  t.typeOf(object), t.typeOf(value)]));
+                default:
+                    throw new Error(
+                        u.format('Expected at most two arguments, but got ~s',
+                                 arguments.length));
+                }
         };
-        if ('iniform' in description) {
-            if (b.func(description.iniform))
-                val = description.iniform();
-            else val = description.iniform;
-            if (t.getType(description.type)(description.iniform))
-                description.value = val;
+        if ('initform' in description) {
+            if (b.func(description.initform)) val = description.initform();
+            else val = description.initform;
+            if ((description.type && description.type(val)) ||
+                !description.type) description.value = val;
             else throw new Error(
-                'Incompatible initform, expected ' +
-                    description.type + ' but got ' + t.typeOf(val));
+                u.format('Incompatible initform, expected ~s but got ~s',
+                         [description.type, t.typeOf(val)]));
         }
-        methods[type + u.capitalize(description.name)] = result;
+        // TODO: this should be an actual generic some day
+        generics[slotName] = result;
         // TODO: class allocation (vs instance allocation)
         // TODO: slots will be bound by default, maybe not such a good idea?
         return result;
@@ -54,36 +75,67 @@ function (_, u, t) {
                 }
             };
         u.maphash(result, initialValues);
-        result.t = t.typeOf;
+        result.toString = function () { return "[object #" + type + "]"; };
         return result;
     }
 
-    function extend(child, parent) {
+    function copySlotDescription(old) {
+        return { type: old.type || t.object,
+                 initform: old.initform,
+                 allocation: old.allocation || 'instance' };
+    }
+    
+    function extend(parent, child) {
         // TODO: Look into C3 for exact implementation
         // these have to agree on type
-        return _.union(classes[parent].slots, child);
+        var result = { }, copier = function(value, key) {
+            result[key] = copySlotDescription(value);
+        };
+        _.each(classes[parent](0), copier);
+        _.each(child, copier);
+        return result;
     }
 
     function defClass(type, parents, fields) {
+        parents = parents || ['object'];
+        fields = fields || { };
         if (!b.string(type))
             throw new Error(u.format('Argument ~s must be a string', [type]));
         if (!(b.vector(parents) && _.every(parents, b.string)))
             throw new Error(u.format('Invalid superclass types of ~s', [type]));
-        if (!(b.vector(fields) && _.every(fields, b.hashtable)))
+        if (!(b.hashtable(fields) && _.every(fields, b.hashtable)))
             throw new Error(u.format('Invalid superclass fields of ~s', [type]));
 
         if (!parents.length) parents.push('object');
         t.defType(type, function (value) {
             return b.func(value) && value()() == type;
         }, parents);
-        return classes[type] = function (slots, type) {
+        return classes[type] = function (rawSlots, type) {
+            var slots = { };
+            _.each(rawSlots, function (value, key) {
+                slots[key] = makeSlot(value, type, key);
+            });
             return function () { return arguments.length ? slots : type; };
-        }(_.reduce(parents, extend, fields), type);
+        }(_.reduce(parents.concat(fields), extend), type);
     }
 
     function chooseBestMethod(methodsGroup, args) {
-        // not implementing keys, optional or rest for now
-        return methodsGroup[_.map(args, t.typeOf).join('/')];
+        // TODO: &keys, &optional or &rest
+        var types = _.map(args, t.typeOf),
+            result = methodsGroup[types.join('/')];
+        if (!result) {
+            // TODO: not trying to find best match, whichever fits first wins
+            // will do it properly later
+            result = _.filter(methodsGroup, function (value, key) {
+                var parts = key.split('/');
+                return (parts.length == args.length) &&
+                    _.every(parts, function (part, i) {
+                        return part == types[i] || t.isSubtypeOf(types[i], part);
+                    });
+            });
+            if (result) result = result[0];
+        }
+        return result;
     }
     
     function defGeneric(name, args) {
@@ -152,15 +204,22 @@ function (_, u, t) {
     }
 
     // some built-in classes have fields
-    classes.func = { type: 'func' };
-    classes.func.slots =
-        [makeSlot({ name: 'length', initform: 0, type: b.number },
-                  classes.func, 'func')];
-    classes.vector = { type: 'vector' };
-    classes.vector.slots =
-        [makeSlot({ name: 'length', initform: 0, type: b.number },
-                  classes.vector, 'vector')];
-    classes.object = { type: 'object', slots: [] };
+    // this needs cleanup
+    classes.func = function (slots) {
+        return function () {
+            return (arguments.length) ? slots : 'func';
+        };
+    }({ length: makeSlot({ initform: 0, type: b.number }, 'func', 'length') });
+    
+    classes.vector = function (slots) {
+        return function () {
+            return (arguments.length) ? slots : 'func';
+        };
+    }({ length: makeSlot({ initform: 0, type: b.number }, 'vector', 'length') });
+
+    classes.object = function () {
+        return (arguments.length) ? { } : 'func';
+    };
 
     return { defClass: defClass, makeInstance: makeInstance, defGeneric: defGeneric,
              defMethod: defMethod, methods: generics };

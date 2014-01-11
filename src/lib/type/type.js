@@ -5,15 +5,20 @@ define(
 function (_, u) {
     var types = { }, tree = { }, constructors = { },
         builtins = ['object', 'bool', 'string', 'number', 'func',
-                    'regexp', 'date', 'sequence', 'hashmap',
+                    'regexp', 'date', 'sequence', 'hashtable',
                     'vector', 'error'],
         slice = Array.prototype.slice;
     
     function typeOf(value) {
-        if (value.t == typeOf) return value()();
-        return _.filter(types, function (predicate, key) {
-            return predicate(value) && key;
-        })[0] || 'nul';
+        // maybe some time I'll find a better way to do it.
+        var result;
+        if (/\[object #[\w-]+\]/.test(String(value)))
+            result = value()();
+        else result = u.find(function (key, predicate) {
+            return predicate(value);
+        }, types);
+        if (vector(result)) result = result[0];
+        return result || 'nul';
     }
 
     function object(value) {
@@ -50,9 +55,9 @@ function (_, u) {
 
     function csequence() { return { }; }
 
-    function hashmap(value) { return sequence(value); }
+    function hashtable(value) { return sequence(value); }
 
-    function chashmap() { return csequence(); }
+    function chashtable() { return csequence(); }
 
     function vector(value) { return value instanceof Array; }
 
@@ -67,11 +72,18 @@ function (_, u) {
     function nul(value) { return !object(value); }
 
     function isSubtypeOf(type, maybeSuper) {
+        // TODO: This is too sloppy
         var supertypes = tree[type], result;
-        debugger;
-        if (!(maybeSuper != 'object' && u.equal(supertypes, ['object'])))
-            result = maybeSuper == 'object' || supertypes.indexOf(maybeSuper) > -1 ||
-            _.some(supertypes, u.flip(maybeSuper));
+        if (maybeSuper == 'object' && type != 'nul')
+            result = true;
+        else if (maybeSuper == 'object')
+            result = false;
+        else if (u.equal(supertypes, ['object']))
+            result = false;
+        else if (supertypes.indexOf(maybeSuper) > -1)
+            result = true;
+        else if (_.some(supertypes, _.partial(isSubtypeOf, maybeSuper)))
+            result = true;
         return result;
     }
     
@@ -98,16 +110,17 @@ function (_, u) {
 
     u.zipWith(_.partial(u.aset, types), builtins,
         [object, bool, string, number, func, regexp, date,
-         sequence, hashmap, vector, error]);
+         sequence, hashtable, vector, error]);
     u.zipWith(
         _.partial(u.aset, constructors), builtins,
         [cobject, cbool, cstring, cnumber, cfunc, cregexp, cdate,
-         csequence, chashmap, cvector, cerror]);
+         csequence, chashtable, cvector, cerror]);
     _.each(builtins, function (x) { tree[x] = ['object']; });
 
     return { typeOf: typeOf, isType: isType, defType: defType, getType: getType,
+             isSubtypeOf: isSubtypeOf,
              builtins: {
                  object: object, bool: bool, string: string, number: number,
                  func: func, regexp: regexp, date: date, sequence: sequence,
-                 hashmap: hashmap, vector: vector, error: error } };
+                 hashtable: hashtable, vector: vector, error: error } };
 });

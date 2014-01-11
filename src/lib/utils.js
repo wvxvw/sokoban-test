@@ -160,11 +160,36 @@ function (_) {
             zipWith(func, _.map(tables, _.keys), _.map(tables, _.values));
         }
     }
+
+    function find(func /* rest */) {
+        var result;
+        if (arguments.length == 2) {
+            var object = arguments[1];
+            if (object instanceof Array) {
+               for (var i = 0; i < object.length; i++) {
+                   if (func(object[i])) {
+                       result = object[i];
+                       break;
+                   }
+               }
+            } else {
+                for (var p in object) {
+                    if (func(p, object[p])) {
+                        result = [p, object[p]];
+                        break;
+                    }
+                }
+            }
+        } else {
+            // TODO: for multiple sequences
+        }
+        return result;
+    }
     
     return { treeSize: treeSize, binaryInsert: binaryInsert, equal: equal,
              positionIf: positionIf, indexOf: indexOf, mvcompose: mvcompose,
              triduce: triduce, mapply: mapply, mapcall: mapcall, aref: aref,
-             raref: raref, constantly: constantly, zipWith: zipWith,
+             raref: raref, constantly: constantly, zipWith: zipWith, find: find,
              ensureArray: ensureArray, times: times, flip: flip, aset: aset,
              capitalize: capitalize, format: format, mapc: mapc, maphash: maphash };
 });

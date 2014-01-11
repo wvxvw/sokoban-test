@@ -7,29 +7,29 @@ function (_, u, t, o) {
 
     o.defClass(
         'gameObject', [],
-        [{ name: 'x', type: t.number },
-         { name: 'y', type: t.number },
-         { name: 'texture', type: t.string, allocation: 'class' }]);
+        { x: { type: t.number },
+          y: { type: t.number },
+          texture: { type: t.string, allocation: 'class' } });
     
     o.defClass(
         'player', ['gameObject'],
-        [{ name: 'turns', type: t.vector, initform: 0 }]);
+        { turns: { type: t.vector, initform: 0 } });
 
     o.defClass(
         'map', [],
-        [{ name: 'width', type: t.number },
-         { name: 'height', type: t.number }]);
+        { width: { type: t.number },
+          height: { type: t.number } });
 
     o.defClass(
         'eventHandler', [],
-        [{ name: 'listeners', type: b.hashtable, iniform: {} }]);
+        { listeners: { type: b.hashtable, initform: {} } });
 
-    o.defClass('listener', [], []);
+    o.defClass('listener');
 
-    o.defClass('upListener', ['listener'], []);
-    o.defClass('downListener', ['listener'], []);
-    o.defClass('rightListener', ['listener'], []);
-    o.defClass('leftListener', ['listener'], []);
+    o.defClass('upListener', ['listener']);
+    o.defClass('downListener', ['listener']);
+    o.defClass('rightListener', ['listener']);
+    o.defClass('leftListener', ['listener']);
 
     o.defGeneric('draw', [t, t]);
     o.defGeneric('start', [t]);
@@ -71,14 +71,14 @@ function (_, u, t, o) {
     o.defMethod(
         'getPlayerX', ['map'],
         function (map) {
-            // moving left
+            // this should look for player chip on the map
             return 0;
         });
 
     o.defMethod(
         'getPlayerY', ['map'],
         function (map) {
-            // moving left
+            // this should look for player chip on the map
             return 0;
         });
 
@@ -92,9 +92,9 @@ function (_, u, t, o) {
         'start', ['eventHandler'],
         function (handler) {
             u.zipWith(
-                _.compose(_.partial(m.register, handler), o.makeInstance),
-                ['upListener', 'downListener',
-                 'rightListener', 'leftListener'],
+                _.partial(m.register, handler),
+                _.map(['upListener', 'downListener', 'rightListener', 'leftListener'],
+                      o.makeInstance),
                 ['up', 'down', 'right', 'left']);
         });
 

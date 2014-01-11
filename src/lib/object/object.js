@@ -14,11 +14,15 @@ function (_, u, t) {
             if (value.allocation != 'class')
                 result[key] = copySlotDescription(value);
         });
-        u.mapc(result, u.flip(makeSlot, result, type));
-        return result;
+        _.each(result, function (value, key) {
+            if (value.allocation != 'class')
+                slots[key] = makeSlot(value, type, key);
+        });
+        return slots;
     }
 
     function makeSlot(description, type, name) {
+        if (!description.type) debugger;
         var val, slotName = type + u.capitalize(name),
             result = function (object, value) {
                 switch (arguments.length) {
@@ -68,13 +72,12 @@ function (_, u, t) {
     function makeInstance(type, initialValues) {
         var slots = computeSlots(type), cons = classes[type],
             result = function (slot, value) {
+                if (arguments.length && !(slot in slots))
+                    throw new Error('Class ' + type + ' has no slot ' + slot);
                 switch (arguments.length) {
                 case 0: return cons;
-                case 1:
-                case 2:
-                    if (!(slot in slots))
-                        throw new Error('Class ' + type + ' has no slot ' + slot);
-                    return slots[slot](value);
+                case 1: return slots[slot](result);
+                case 2: return slots[slot](result, value);
                 default:
                     throw new Error('Extra arguments ' + slice.call(arguments));
                 }
@@ -85,9 +88,10 @@ function (_, u, t) {
     }
 
     function copySlotDescription(old) {
-        return { type: old.type || t.object,
-                 initform: old.initform,
-                 allocation: old.allocation || 'instance' };
+        var result = { type: old.type || b.object,
+                       allocation: old.allocation || 'instance' };
+        if ('initform' in old) result.initform = old.initform;
+        return result;
     }
     
     function extend(parent, child) {
@@ -118,7 +122,7 @@ function (_, u, t) {
         return classes[type] = function (rawSlots, type) {
             var slots = { };
             _.each(rawSlots, function (value, key) {
-                slots[key] = makeSlot(value, type, key);
+                slots[key] = copySlotDescription(value);
             });
             return function () { return arguments.length ? slots : type; };
         }(_.reduce(parents.concat(fields), extend), type);

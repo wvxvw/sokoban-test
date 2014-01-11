@@ -154,7 +154,7 @@ function (_) {
         // same as _.each, its unusable when functions need to rely on proper
         // arity.
         if (arguments.length == 2) {
-            for (var p in arguments[0]) func(p, arguments[0][p]);
+            for (var p in arguments[1]) func(p, arguments[1][p]);
         } else {
             var tables = slice.call(arguments, 1);
             zipWith(func, _.map(tables, _.keys), _.map(tables, _.values));
@@ -191,5 +191,6 @@ function (_) {
              triduce: triduce, mapply: mapply, mapcall: mapcall, aref: aref,
              raref: raref, constantly: constantly, zipWith: zipWith, find: find,
              ensureArray: ensureArray, times: times, flip: flip, aset: aset,
-             capitalize: capitalize, format: format, mapc: mapc, maphash: maphash };
+             capitalize: capitalize, format: format, mapc: mapc, maphash: maphash,
+             somecall: somecall };
 });

@@ -22,13 +22,11 @@ function (_, u, t) {
     }
 
     function makeSlot(description, type, name) {
-        if (!description.type) debugger;
-        var val, slotName = type + u.capitalize(name),
-            result = function (object, value) {
+        var val, result = function (object, value) {
                 switch (arguments.length) {
                 case 0:
                     throw new Error(
-                        u.format('Not enough arguments for ~s', [slotName]));
+                        u.format('Not enough arguments for ~s', [name]));
                 case 1:
                     if (t.isType(object, type))
                         return description.value;
@@ -63,7 +61,7 @@ function (_, u, t) {
                          [description.type, t.typeOf(val)]));
         }
         // TODO: this should be an actual generic some day
-        generics[slotName] = result;
+        // generics[slotName] = result;
         // TODO: class allocation (vs instance allocation)
         // TODO: slots will be bound by default, maybe not such a good idea?
         return result;
@@ -119,9 +117,15 @@ function (_, u, t) {
         t.defType(type, function (value) {
             return b.func(value) && value()() == type;
         }, parents);
+        
         return classes[type] = function (rawSlots, type) {
             var slots = { };
             _.each(rawSlots, function (value, key) {
+                generics[type + u.capitalize(key)] = function (object, value) {
+                    // this is rad...
+                    return (arguments.length == 2) ?
+                        object()(0)[key](object, value) : object()(0)[key](object);
+                };
                 slots[key] = copySlotDescription(value);
             });
             return function () { return arguments.length ? slots : type; };

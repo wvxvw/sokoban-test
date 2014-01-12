@@ -184,7 +184,7 @@ function findNeighbour(map, player, direction) {
 function calculateMove(map, direction) {
     // TODO: this needs serious rewrite...
     var player = findPlayer(map), neighbourDigit, boxNeighbourDigit,
-        playerDigit = map[player[0]][player[1]], boxNeighbour,
+        playerDigit = map[player[1]][player[0]], boxNeighbour,
         neighbour = findNeighbour(map, player, direction);
     // TODO: take digits from config
     // 2 is wall
@@ -199,6 +199,7 @@ function calculateMove(map, direction) {
         case 1:
         case 4:
             map[neighbour[1]][neighbour[0]] = (neighbourDigit == 1) ? 0 : 6;
+            console.log('playerDigit ' + playerDigit);
             map[player[1]][player[0]] = (playerDigit == 0) ? 1 : 4;
             break;
         case 3:
@@ -216,6 +217,7 @@ function calculateMove(map, direction) {
                     map[boxNeighbour[1]][boxNeighbour[0]] = 3;
                     map[neighbour[1]][neighbour[0]] = (neighbourDigit == 3) ? 0 : 6;
                     map[player[1]][player[0]] = (playerDigit == 0) ? 1 : 4;
+                    break;
                 case 4:
                     map[boxNeighbour[1]][boxNeighbour[0]] = 5;
                     map[neighbour[1]][neighbour[0]] = (neighbourDigit == 3) ? 0 : 6;
@@ -238,6 +240,19 @@ function fold(array, chop) {
     return result;
 }
 
+function isWinner(map) {
+    var row;
+    for (var y = 0; y < map.length; y++) {
+        row = map[y];
+        for (var x = 0; x < row.length; x++) {
+            if (row[x] == 4) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 function moveHandler(req, res) {
     withPost(req, res, function (post) {
         var postData = JSON.parse(post);
@@ -247,7 +262,16 @@ function moveHandler(req, res) {
                 fold(_.map(rows[0].state.split(''),
                            _.compose(parseInt, _.identity)), 8),
                 req.url.replace(/\/(?:[^\/]+\/)+(\w+)\.json/, '$1'));
-            res.end(JSON.stringify({ uid: postData.uid, levels: copy }));
+            connection.query(
+                'update players set active = now(), state =\'' +
+                    _.flatten(copy.map).join('') + '\' where uid = \'' +
+                    postData.uid + '\'',
+                function (err) {
+                    if (err) throw err;
+                    console.log('Updated user: ' + postData.uid);
+                });
+            res.end(JSON.stringify({ uid: postData.uid, level: copy,
+                                     isWinner: isWinner(copy.map) }));
         });
     });
 }

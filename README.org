@@ -59,6 +59,7 @@ Special thanks to [[http://en.wikipedia.org/wiki/Sokoban][Wikipedia]] for game d
     make use of client's utilities library.
   - Android deployment hasn't been written and won't be this Sunday. Sorry.
   - Database setup is manula at this time, again, sorry, no time.
+  - Database needs trunkating every some time (to discard inactive users).
 
 * Tasks
 

@@ -123,9 +123,11 @@ function (_) {
     function repeat(element, n) { return times(constantly(element), n, []); }
 
     function somecall(/* rest */) {
-        var result, rest = slice.call(arguments), i = 0;
+        if (!arguments.length) return true;
+        var rest = slice.call(arguments);
         // TODO: need to find out how to disable this warning
-        while (result = rest[i++]) if (result()) return true;
+        for (var i = 0; i < rest.length; i++)
+            if (rest[i]()) return true;
         return false;
     }
 

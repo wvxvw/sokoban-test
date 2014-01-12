@@ -1,3 +1,5 @@
+Special thanks to [[http://en.wikipedia.org/wiki/Sokoban][Wikipedia]] for game description and images.
+
 * Obtaining
   You will need to install git, on RHEL-like Linux:
   : # yum install git nodejs mysql-devel

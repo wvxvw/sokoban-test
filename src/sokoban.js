@@ -43,12 +43,22 @@ function (_, u, t, o, http) {
 
     o.defGeneric('draw', [t, t]);
     o.defGeneric('start', [t]);
-    o.defGeneric('update', [t, t]);
+    o.defGeneric('update', [t, t, t]);
     o.defGeneric('register', [t, t, t]);
     o.defGeneric('getPlayerX', [t]);
     o.defGeneric('getPlayerY', [t]);
     o.defGeneric('render', [t, t]);
 
+    function move(direction, map) {
+        var player = m.mapPlayer(map);
+        http('post', 'move/' + direction + '.json',
+             { uid: m.playerUid(player) })(
+            function (data) {
+                console.log('new map received');
+            },
+            function (error) { console.error('Couldn\'t move'); });
+    }
+    
     o.defMethod(
         'render', ['map', 'vector'], function (map, images) {
             drawBoard(m.mapCanvas(map), m.mapBoard(map),
@@ -58,40 +68,43 @@ function (_, u, t, o, http) {
 
     o.defMethod(
         'draw', ['gameObject', 'map'], function (obj, map) {
-
+            // this will not happen in this version
+            // (designed for coin and magnet).
         });
 
     o.defMethod(
-        'update', ['eventHandler', 'upListener'], function (event, listener) {
-            // moving up
+        'update', ['eventHandler', 'upListener', 'map'],
+        function (event, listener, map) {
+            move('up', map);
         });
 
     o.defMethod(
-        'update', ['eventHandler', 'downListener'], function (event, listener) {
-            // moving down
+        'update', ['eventHandler', 'downListener', 'map'],
+        function (event, listener, map) {
+            move('down', map);
         });
 
     o.defMethod(
-        'update', ['eventHandler', 'rightListener'], function (event, listener) {
-            // moving right
+        'update', ['eventHandler', 'rightListener', 'map'],
+        function (event, listener, map) {
+            move('right', map);
         });
 
     o.defMethod(
-        'update', ['eventHandler', 'leftListener'], function (event, listener) {
-            // moving left
+        'update', ['eventHandler', 'leftListener', 'map'],
+        function (event, listener, map) {
+            move('left', map);
         });
 
-    o.defMethod(
-        'getPlayerX', ['map'], function (map) {
-            // this should look for player chip on the map
-            return 0;
-        });
+    // in the future we can validate player's position
+    // to avoid extra RPC
+    o.defMethod('getPlayerX', ['map'], function (map) {
+        return m.playerX(m.mapPlayer(map));
+    });
 
-    o.defMethod(
-        'getPlayerY', ['map'], function (map) {
-            // this should look for player chip on the map
-            return 0;
-        });
+    o.defMethod('getPlayerY', ['map'], function (map) {
+        return m.playerY(m.mapPlayer(map));
+    });
 
     o.defMethod(
         'register', ['eventHandler', 'listener', 'string'],
@@ -160,11 +173,23 @@ function (_, u, t, o, http) {
             player = o.makeInstance(
                 'player', { x: m.getPlayerX(map), y: m.getPlayerY(map), uid: data.uid });
         m.mapPlayer(map, player);
+        return map;
     }
 
     o.defMethod(
         'start', ['eventHandler'],
         function (handler) {
+            var translation = {
+                '38': 'up',
+                '40': 'down',
+                '37': 'left',
+                '39': 'right',
+                '87': 'up',      // w
+                '65': 'left',    // a
+                '83': 'down',    // s
+                '68': 'right' }, // d
+                map;
+                                
             u.zipWith(
                 _.partial(m.register, handler),
                 _.map(['upListener', 'downListener', 'rightListener', 'leftListener'],
@@ -172,12 +197,17 @@ function (_, u, t, o, http) {
                 ['up', 'down', 'right', 'left']);
             http('post', 'levels/0.json')(
                 function (event) {
-                    console.log('received response: ' + event);
-                    initGame(JSON.parse(event.currentTarget.responseText));
+                    map = initGame(JSON.parse(event.currentTarget.responseText));
                 },
                 function (event) {
                     console.error('received error: ' + event);
                 });
+            document.body.addEventListener('keyup', function (event) {
+                if (event.keyCode in translation) 
+                    m.update(handler,
+                             m.eventHandlerListeners(handler)[
+                                 translation[event.keyCode]], map);
+            });
         });
 
     return function main() {

@@ -8,6 +8,7 @@
         "box": { "chip": 3, "skin": "img/box.png" },
         "goal": { "chip": 4, "skin": "img/goal.png" },
         "goalbox": { "chip": 5, "skin": "img/goalbox.png" },
+        "playergoal": { "chip": 6, "skin": "img/player.png" },
         "coin": { "skin": "img/coin.png" },
         "magnet": { "skin": "img/magnet.png" },
         "grid": [32, 32],

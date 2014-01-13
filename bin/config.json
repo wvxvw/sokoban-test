@@ -1,6 +1,6 @@
-{ "dbuser": "wvxvw",
-  "dbpassword": "secret",
-  "dbname": "sokoban",
+{ "db": { "dbuser": "wvxvw",
+          "dbpassword": "secret",
+          "dbname": "sokoban" },
   "levels": [
       { "player": { "chip": 0, "skin": "img/player.png" },
         "floor": { "chip": 1, "skin": "img/floor.png" },

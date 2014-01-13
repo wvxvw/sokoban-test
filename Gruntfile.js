@@ -25,6 +25,8 @@ module.exports = function(grunt) {
                           dest: 'bin/js/game', flatten: true },
                         { expand: true, src: ['src/server.js'],
                           dest: 'bin/', flatten: true },
+                        { expand: true, src: ['src/server/*.js'],
+                          dest: 'bin/server', flatten: true },
                         { expand: true, src: ['node_modules/lodash/lodash.js'],
                           dest: 'bin/js/lib', flatten: true },
                         { expand: true, src: 'node_modules/lodash/dist/lodash.min.js',

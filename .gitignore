@@ -7,3 +7,5 @@ node_modules
 /bin/js/game/*
 /bin/js/min/*
 /bin/js/require.js
+/bin/server
+/bin/server.js

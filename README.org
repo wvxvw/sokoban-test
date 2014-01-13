@@ -41,7 +41,7 @@ Special thanks to [[http://en.wikipedia.org/wiki/Sokoban][Wikipedia]] for game d
     be something along these lines:
     : $ mysql < ./sql/deploy.sql
   - Make sure the database is up:
-    : $ ps aux | grep mysqld
+    : $ ps -e | grep mysqld
     If no results, start =mysqld= service:
     : # service mysqld start
   - Make sure the database access information matches

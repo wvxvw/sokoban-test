@@ -10,7 +10,11 @@ function (_, u, t, o, http) {
         { x: { type: b.number },
           y: { type: b.number },
           texture: { type: b.string, allocation: 'class' } });
-    
+
+    o.defClass('gameState', []);
+    o.defClass('playState', ['gameState']);
+    o.defClass('winState', ['gameState']);
+
     o.defClass(
         'player', ['gameObject'],
         { turns: { type: b.vector, initform: [] },
@@ -26,14 +30,25 @@ function (_, u, t, o, http) {
           cellWidth: { type: b.number },
           cellHeight: { type: b.number },
           board: { type: b.vector },
+          data: { type: b.hashtable },
           background: { type: b.object },
           canvas: { type: b.object },
           player: { type: t.getType('player') } });
 
+    
     o.defClass(
         'eventHandler', [],
         { listeners: { type: b.hashtable, initform: {} },
-          keyhandler: { type: b.func } });
+          keyhandler: { type: b.func },
+          // don't know how to do forward references yet
+          game: { type: b.object } });
+    
+    o.defClass(
+        'game', [],
+        { states: { type: b.hashtable },
+          state: { type: t.getType('gameState') },
+          map: { type: t.getType('map') },
+          handler: { type: t.getType('eventHandler') } });
 
     o.defClass('listener');
 
@@ -56,16 +71,45 @@ function (_, u, t, o, http) {
              { uid: m.playerUid(player) })(
             function (event) {
                 console.log('new map received');
-                initGame(JSON.parse(event.currentTarget.responseText), handler);
+                initGame(JSON.parse(event.currentTarget.responseText),
+                         m.eventHandlerGame(handler));
             },
             function (error) { console.error('Couldn\'t move'); });
     }
     
     o.defMethod(
-        'render', ['map', 'vector'], function (map, images) {
-            drawBoard(m.mapCanvas(map), m.mapBoard(map),
-                      images, m.mapCellWidth(map), m.mapCellHeight(map),
-                      m.mapBackground(map));
+        'render', ['map', 'playState'], function (map, state) {
+            var canvas = m.mapCanvas(map), board = m.mapBoard(map),
+                cellWidth = m.mapCellWidth(map), cellHeight = m.mapCellHeight(map),
+                context = canvas.getContext('2d'), data = m.mapData(map);
+
+            loadTextures(data, map, function (images) {
+                // background may not be available before the images are all loaded
+                var background = m.mapBackground(map);
+                context.fillStyle = context.createPattern(background, 'repeat');
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                _.each(board, function (row, y) {
+                    _.each(row, function (cell, x) {
+                        context.drawImage(images[cell], x * cellWidth, y * cellHeight);
+                    });
+                });
+            });
+        });
+
+    o.defMethod(
+        'render', ['map', 'winState'], function (map, state) {
+            var canvas = m.mapCanvas(map), board = m.mapBoard(map),
+                context = canvas.getContext('2d'),
+                message = 'You win!', metrix = context.measureText(message);
+            
+            context.font = '32pt sans';
+            context.fillStyle = 'pink';
+            // it only measures the width of the text :/
+            // also, this measurment doesn't make any sense, not sure what
+            // it measures... ideally, this would have been:
+            // (canvas.width - metrix.width) / 2, but I'll just put a value
+            // that visually makes more sense
+            context.fillText(message, 40, 140);
         });
 
     o.defMethod(
@@ -116,20 +160,28 @@ function (_, u, t, o, http) {
             m.eventHandlerListeners(handler)[string] = listener;
         });
 
-    function loadTextures(data, map) {
-        var loaded = 0, images = [],
+    function loadTextures(data, map, continuation) {
+        var loaded = 0, images = [], cache = { }, 
             items = ['player', 'floor', 'wall', 'box', 'goal',
                      'goalbox', 'coin', 'magnet', 'playergoal'];
         
         _.each(items, function (gameObject, i) {
             var image = document.createElement('img');
-            image.src = data[gameObject].skin;
-            images[data[gameObject].chip] = image;
-            if (gameObject == 'floor') m.mapBackground(map, image);
-            image.addEventListener('load', function () {
+            // some images may appear twice, for these there is a
+            // problem triggering `load' event
+            if (data[gameObject].skin in cache) {
+                images[data[gameObject].chip] = cache[data[gameObject].skin];
+            } else {
+                cache[data[gameObject].skin] = image;
+                image.src = data[gameObject].skin;
                 loaded++;
-                if (loaded == items.length) m.render(map, images);
-            });
+                images[data[gameObject].chip] = image;
+                if (gameObject == 'floor') m.mapBackground(map, image);
+                image.addEventListener('load', function () {
+                    loaded--;
+                    if (!loaded) continuation(images);
+                });
+            }
         });
     }
 
@@ -147,33 +199,22 @@ function (_, u, t, o, http) {
         return canvas;
     }
 
-    function drawBoard(canvas, board, images, cellWidth, cellHeight, background) {
-        var context = canvas.getContext('2d');
-        context.fillStyle = context.createPattern(background, 'repeat');
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        _.each(board, function (row, y) {
-            _.each(row, function (cell, x) {
-                context.drawImage(images[cell], x * cellWidth, y * cellHeight);
-            });
-        });
-    }
-    
     function parseMap(data) {
         var grid = data.grid, board = data.map,
             width = grid[0] * board[0].length,
-            height = grid[1] * board.length,
-            map = o.makeInstance(
+            height = grid[1] * board.length;
+        
+        return o.makeInstance(
                 'map',
                 { width: width, height: height,
                   canvas: initStage(width, height),
                   cellWidth: data.grid[0],
+                  data: data,
                   cellHeight: data.grid[1],
                   board: data.map });
-        loadTextures(data, map);
-        return map;
     }
-    
-    function initGame(data, handler) {
+
+    function initGame(data, game) {
         var translation = {
             '38': 'up',
             '40': 'down',
@@ -184,9 +225,12 @@ function (_, u, t, o, http) {
             '83': 'down',    // s
             '68': 'right' }, // d
             map = parseMap(data.level),
+            handler = m.gameHandler(game),
             keyhandler = m.eventHandlerKeyhandler(handler),
+            states = m.gameStates(game),
             player = o.makeInstance(
                 'player', { x: m.getPlayerX(map), y: m.getPlayerY(map), uid: data.uid });
+        
         m.mapPlayer(map, player);
         if (keyhandler)
             document.body.removeEventListener('keyup', keyhandler);
@@ -197,12 +241,22 @@ function (_, u, t, o, http) {
                              m.eventHandlerListeners(handler)[
                                  translation[event.keyCode]], map);
             }));
+        m.gameState(game, data.isWinner ? states.win : states.play);
+        m.render(map, m.gameState(game));
         return map;
     }
 
     o.defMethod(
         'start', ['eventHandler'],
         function (handler) {
+            var game = o.makeInstance('game'),
+                playState = o.makeInstance('playState'),
+                winState = o.makeInstance('winState');
+            
+            m.gameStates(game, { play: playState, win: winState });
+            m.gameState(game, playState);
+            m.gameHandler(game, handler);
+            m.eventHandlerGame(handler, game);
             u.zipWith(
                 _.partial(m.register, handler),
                 _.map(['upListener', 'downListener', 'rightListener', 'leftListener'],
@@ -210,7 +264,7 @@ function (_, u, t, o, http) {
                 ['up', 'down', 'right', 'left']);
             http('post', 'levels/0.json')(
                 function (event) {
-                    initGame(JSON.parse(event.currentTarget.responseText), handler);
+                    initGame(JSON.parse(event.currentTarget.responseText), game);
                 },
                 function (event) {
                     console.error('received error: ' + event);

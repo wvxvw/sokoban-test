@@ -115,7 +115,7 @@ function (_, u, t) {
 
         if (!parents.length) parents.push('object');
         t.defType(type, function (value) {
-            return b.func(value) && value()() == type;
+            return b.func(value) && (value()() == type || t.isSubtypeOf(value()(), type));
         }, parents);
         
         return classes[type] = function (rawSlots, type) {

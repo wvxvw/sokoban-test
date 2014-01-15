@@ -1,5 +1,7 @@
 Special thanks to [[http://en.wikipedia.org/wiki/Sokoban][Wikipedia]] for game description and images.
 
+Walk-through the object structure [[http://youtu.be/IZh50ykQkNw][(Watch on YouTube)]]
+
 * Obtaining
   You will need to install git, on RHEL-like Linux:
   : # yum install git nodejs mysql-devel
@@ -48,7 +50,7 @@ Special thanks to [[http://en.wikipedia.org/wiki/Sokoban][Wikipedia]] for game d
     the information in [[./bin/config.json][config.json]], to test try
     : $ cat ./bin/config.json \
     : | python -c 'import json,sys;o=json.load(sys.stdin);\
-    :   print o["dbuser"] + " " + o["dbpassword"]' \
+    :   print o["db"]["dbuser"] + " " + o["db"]["dbpassword"]' \
     : | xargs -n3 sh -c 'mysql --user=$0 --password=$1'
     /(formatted for readability)/
   
